@@ -8,20 +8,19 @@ datasource db {
 }
 
 model User {
-  id            String       @id @default(uuid())
-  email         String       @unique
-  password      String
-  role          UserRole
-  emailVerified Boolean      @default(false)
-  status        UserStatus   @default(ACTIVE)
-  createdAt     DateTime     @default(now())
-  updatedAt     DateTime     @updatedAt
-  admin         Admin?
-  regularUser   RegularUser?
-  payments      Payment[]
-  votes         Vote[]
-  comments      Comment[]
-  reports       Report[]
+  id          String       @id @default(uuid())
+  email       String       @unique
+  password    String
+  role        UserRole
+  status      UserStatus   @default(ACTIVE)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  admin       Admin?
+  regularUser RegularUser?
+  payments    Payment[]
+  votes       Vote[]
+  comments    Comment[]
+  reports     Report[]
 
   @@map("users")
 }
@@ -35,6 +34,7 @@ model Admin {
   email         String    @unique
   profilePhoto  String?
   contactNumber String?
+  address       String?
   isDeleted     Boolean   @default(false)
   deletedAt     DateTime?
   createdAt     DateTime  @default(now())
