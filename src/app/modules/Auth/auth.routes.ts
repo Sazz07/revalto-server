@@ -1,9 +1,10 @@
-import express from 'express';
+import express, { NextFunction, Request, Response } from 'express';
 import { AuthController } from './auth.controller';
 import auth from '../../middlewares/auth';
 import { UserRole } from '@prisma/client';
 import validateRequest from '../../middlewares/validateRequest';
 import { AuthValidation } from './auth.validation';
+import { fileUploader } from '../../../helpers/fileUploader';
 
 const router = express.Router();
 
@@ -11,6 +12,17 @@ router.post(
   '/login',
   validateRequest(AuthValidation.loginZodSchema),
   AuthController.loginUser
+);
+
+router.post(
+  '/register',
+  fileUploader.upload.single('file'),
+  (req: Request, res: Response, next: NextFunction) => {
+    req.body = AuthValidation.registerZodSchema.parse(
+      JSON.parse(req.body.data)
+    );
+    return AuthController.registerUser(req, res, next);
+  }
 );
 
 router.post('/refresh-token', AuthController.refreshToken);
