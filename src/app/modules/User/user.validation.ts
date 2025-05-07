@@ -70,17 +70,6 @@ const createAdminZodSchema = z.object({
   }),
 });
 
-const loginZodSchema = z.object({
-  email: z
-    .string({
-      required_error: 'Email is required',
-    })
-    .email('Invalid email format'),
-  password: z.string({
-    required_error: 'Password is required',
-  }),
-});
-
 const updateUserZodSchema = z.object({
   firstName: z.string().min(1, 'First name cannot be empty').optional(),
   middleName: z.string().optional(),
@@ -105,18 +94,6 @@ const updateAdminZodSchema = z.object({
   address: z.string().optional(),
 });
 
-const changePasswordZodSchema = z.object({
-  oldPassword: z.string({
-    required_error: 'Old password is required',
-  }),
-  newPassword: z
-    .string({
-      required_error: 'New password is required',
-    })
-    .min(6, 'Password must be at least 6 characters')
-    .max(20, 'Password must not exceed 20 characters'),
-});
-
 const updateUserStatusZodSchema = z.object({
   status: z.nativeEnum(UserStatus, {
     required_error: 'Status is required',
@@ -126,9 +103,7 @@ const updateUserStatusZodSchema = z.object({
 
 export const UserValidation = {
   createUserZodSchema,
-  loginZodSchema,
   updateUserZodSchema,
-  changePasswordZodSchema,
   updateUserStatusZodSchema,
   createAdminZodSchema,
   updateAdminZodSchema,

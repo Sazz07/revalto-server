@@ -73,7 +73,7 @@ const globalErrorHandler: ErrorRequestHandler = (err, req, res, next) => {
     status: statusCode,
     message,
     error: errorSources,
-    stack: config.NODE_ENV === 'development' ? err?.stack : null,
+    stack: config.env === 'development' ? err?.stack : null,
   });
 };
 
