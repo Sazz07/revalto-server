@@ -8,6 +8,8 @@ import { fileUploader } from '../../../helpers/fileUploader';
 import * as bcrypt from 'bcrypt';
 import config from '../../../config';
 import { UserRole, UserStatus } from '@prisma/client';
+import { queryBuilder } from '../../../shared/queryBuilder';
+import { dataFetcher } from '../../../shared/dataFetcher';
 
 const createAdmin = async (req: Request) => {
   const file = req.file as IFile;
@@ -42,66 +44,41 @@ const createAdmin = async (req: Request) => {
   return result;
 };
 
-const getAllUsers = async (filters: any, options: IPaginationOptions) => {
+const getAllUsers = async (
+  filters: {
+    searchTerm?: string;
+    email?: string;
+    role?: UserRole;
+    status?: UserStatus;
+  },
+  options: IPaginationOptions
+) => {
   const { page, limit, skip } = paginationHelper.calculatePagination(options);
   const { searchTerm, ...filterData } = filters;
 
-  const andConditions = [];
+  const searchConditions = queryBuilder.buildSearchConditions(
+    searchTerm,
+    userSearchableFields
+  );
+  const filterConditions = queryBuilder.buildFilterConditions(filterData);
+  const whereConditions = queryBuilder.buildWhereConditions([
+    ...searchConditions,
+    ...filterConditions,
+  ]);
 
-  if (searchTerm) {
-    andConditions.push({
-      OR: userSearchableFields.map((field) => ({
-        [field]: {
-          contains: searchTerm,
-          mode: 'insensitive',
-        },
-      })),
-    });
-  }
+  const sortOrder = options.sortOrder;
 
-  if (Object.keys(filterData).length > 0) {
-    andConditions.push({
-      AND: Object.keys(filterData).map((key) => ({
-        [key]: {
-          equals: (filterData as any)[key],
-        },
-      })),
-    });
-  }
-
-  const whereConditions =
-    andConditions.length > 0 ? { AND: andConditions } : {};
-
-  const result = await prisma.user.findMany({
-    where: whereConditions,
+  return dataFetcher.getPaginatedData(prisma.user, whereConditions, {
+    page,
+    limit,
     skip,
-    take: limit,
-    orderBy:
-      options.sortBy && options.sortOrder
-        ? {
-            [options.sortBy]: options.sortOrder,
-          }
-        : {
-            createdAt: 'desc',
-          },
+    sortBy: options.sortBy,
+    sortOrder,
     include: {
       admin: true,
       regularUser: true,
     },
   });
-
-  const total = await prisma.user.count({
-    where: whereConditions,
-  });
-
-  return {
-    meta: {
-      page,
-      limit,
-      total,
-    },
-    data: result,
-  };
 };
 
 const getSingleUser = async (id: string) => {

@@ -18,6 +18,8 @@ router.post(
   '/register',
   fileUploader.upload.single('file'),
   (req: Request, res: Response, next: NextFunction) => {
+    console.log(req.body.data);
+
     req.body = AuthValidation.registerZodSchema.parse(
       JSON.parse(req.body.data)
     );
