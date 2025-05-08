@@ -1,11 +1,11 @@
 import { Request, Response } from 'express';
-import { CategoryService } from './Category.service';
 import sendResponse from '../../../shared/sendResponse';
 import catchAsync from '../../../shared/catchAsync';
 import status from 'http-status';
 import pick from '../../../shared/pick';
 import { paginationKeys } from '../../constants';
 import { categoryFilterableFields } from './category.constant';
+import { CategoryService } from './category.service';
 
 const createCategory = catchAsync(async (req: Request, res: Response) => {
   const result = await CategoryService.createCategory(req.body);

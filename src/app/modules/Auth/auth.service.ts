@@ -27,20 +27,20 @@ const loginUser = async (payload: { email: string; password: string }) => {
     throw new AppError(status.UNAUTHORIZED, 'Password incorrect!');
   }
 
+  const jwtPayload = {
+    id: userData.id,
+    email: userData.email,
+    role: userData.role,
+  };
+
   const accessToken = jwtHelpers.generateToken(
-    {
-      email: userData.email,
-      role: userData.role,
-    },
+    jwtPayload,
     config.jwt.jwt_secret as Secret,
     config.jwt.expires_in as string
   );
 
   const refreshToken = jwtHelpers.generateToken(
-    {
-      email: userData.email,
-      role: userData.role,
-    },
+    jwtPayload,
     config.jwt.refresh_token_secret as Secret,
     config.jwt.refresh_token_expires_in as string
   );
@@ -83,6 +83,7 @@ const registerUser = async (req: Request) => {
 
   const accessToken = jwtHelpers.generateToken(
     {
+      id: result.id,
       email: result.email,
       role: UserRole.USER,
     },
@@ -92,6 +93,7 @@ const registerUser = async (req: Request) => {
 
   const refreshToken = jwtHelpers.generateToken(
     {
+      id: result.id,
       email: result.email,
       role: UserRole.USER,
     },
