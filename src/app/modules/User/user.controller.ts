@@ -17,79 +17,6 @@ const createUser = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
-const createAdmin = catchAsync(async (req: Request, res: Response) => {
-  const result = await UserService.createAdmin(req);
-  sendResponse(res, {
-    statusCode: status.CREATED,
-    success: true,
-    message: 'Admin created successfully',
-    data: result,
-  });
-});
-
-const getAllUsers = catchAsync(async (req: Request, res: Response) => {
-  const filters = pick(req.query, userFilterableFields);
-  const options = pick(req.query, paginationKeys);
-
-  const result = await UserService.getAllUsers(filters, options);
-
-  sendResponse(res, {
-    statusCode: status.OK,
-    success: true,
-    message: 'Users retrieved successfully',
-    meta: result.meta,
-    data: result.data,
-  });
-});
-
-const getSingleUser = catchAsync(async (req: Request, res: Response) => {
-  const { id } = req.params;
-  const result = await UserService.getSingleUser(id);
-
-  sendResponse(res, {
-    statusCode: status.OK,
-    success: true,
-    message: 'User retrieved successfully',
-    data: result,
-  });
-});
-
-const updateUser = catchAsync(async (req: Request, res: Response) => {
-  const { id } = req.params;
-  const result = await UserService.updateUser(id, req.body);
-
-  sendResponse(res, {
-    statusCode: status.OK,
-    success: true,
-    message: 'User updated successfully',
-    data: result,
-  });
-});
-
-const updateUserStatus = catchAsync(async (req: Request, res: Response) => {
-  const { id } = req.params;
-  const result = await UserService.updateUserStatus(id, req.body);
-
-  sendResponse(res, {
-    statusCode: status.OK,
-    success: true,
-    message: 'User status updated successfully',
-    data: result,
-  });
-});
-
-const deleteUser = catchAsync(async (req: Request, res: Response) => {
-  const { id } = req.params;
-  const result = await UserService.deleteUser(id);
-
-  sendResponse(res, {
-    statusCode: status.OK,
-    success: true,
-    message: 'User deleted successfully',
-    data: result,
-  });
-});
-
 const getMyProfile = catchAsync(
   async (req: Request & { user?: any }, res: Response) => {
     const result = await UserService.getMyProfile(req.user);
@@ -118,12 +45,6 @@ const updateMyProfile = catchAsync(
 
 export const UserController = {
   createUser,
-  createAdmin,
-  getAllUsers,
-  getSingleUser,
-  updateUser,
-  updateUserStatus,
-  deleteUser,
   getMyProfile,
   updateMyProfile,
 };

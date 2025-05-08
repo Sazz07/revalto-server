@@ -19,38 +19,6 @@ router.post(
   }
 );
 
-router.post(
-  '/create-admin',
-  auth(UserRole.ADMIN),
-  fileUploader.upload.single('file'),
-  (req: Request, res: Response, next: NextFunction) => {
-    req.body = UserValidation.createAdminZodSchema.parse(
-      JSON.parse(req.body.data)
-    );
-    return UserController.createAdmin(req, res, next);
-  }
-);
-
-router.get('/', auth(UserRole.ADMIN), UserController.getAllUsers);
-
-router.get('/:id', auth(UserRole.ADMIN), UserController.getSingleUser);
-
-router.patch(
-  '/:id',
-  auth(UserRole.ADMIN),
-  validateRequest(UserValidation.updateUserZodSchema),
-  UserController.updateUser
-);
-
-router.patch(
-  '/:id/status',
-  auth(UserRole.ADMIN),
-  validateRequest(UserValidation.updateUserStatusZodSchema),
-  UserController.updateUserStatus
-);
-
-router.delete('/:id', auth(UserRole.ADMIN), UserController.deleteUser);
-
 router.get(
   '/profile/me',
   auth(UserRole.ADMIN, UserRole.USER),
