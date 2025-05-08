@@ -7,6 +7,7 @@ import { TagRoutes } from '../modules/Tag/tag.routes';
 import { ReviewRoutes } from '../modules/Review/review.routes';
 import { VoteRoutes } from '../modules/Vote/vote.routes';
 import { CommentRoutes } from '../modules/Comment/comment.routes';
+import { PaymentRoutes } from '../modules/Payment/payment.routes';
 
 const router = express.Router();
 
@@ -42,6 +43,10 @@ const moduleRoutes = [
   {
     path: '/comment',
     route: CommentRoutes,
+  },
+  {
+    path: '/payment',
+    route: PaymentRoutes,
   },
 ];
 
