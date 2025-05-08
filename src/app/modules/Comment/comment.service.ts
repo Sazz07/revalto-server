@@ -1,5 +1,5 @@
 import prisma from '../../../shared/prisma';
-import { Comment, UserRole } from '@prisma/client';
+import { Comment, PaymentStatus, UserRole } from '@prisma/client';
 import { IPaginationOptions } from '../../interfaces/pagination';
 import { paginationHelper } from '../../../helpers/paginationHelper';
 import { commentSearchableFields } from './comment.constant';
@@ -12,11 +12,28 @@ const createComment = async (
   payload: { content: string; reviewId: string; parentId?: string },
   userId: string
 ): Promise<Comment> => {
-  await prisma.review.findUniqueOrThrow({
+  const review = await prisma.review.findUniqueOrThrow({
     where: {
       id: payload.reviewId,
     },
   });
+
+  if (review.isPremium) {
+    const hasAccess = await prisma.payment.findFirst({
+      where: {
+        reviewId: payload.reviewId,
+        userId: userId,
+        status: PaymentStatus.PAID,
+      },
+    });
+
+    if (!hasAccess) {
+      throw new AppError(
+        status.FORBIDDEN,
+        'You need to purchase this premium review to comment on it'
+      );
+    }
+  }
 
   if (payload.parentId) {
     const parentComment = await prisma.comment.findUniqueOrThrow({

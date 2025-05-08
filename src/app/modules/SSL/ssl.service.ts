@@ -6,15 +6,15 @@ import { IPaymentData } from './ssl.interface';
 
 const initPayment = async (paymentData: IPaymentData) => {
   try {
-    // We need to add SSL config to the config file
     if (
-      !process.env.SSL_STORE_ID ||
-      !process.env.SSL_STORE_PASSWORD ||
-      !process.env.SSL_PAYMENT_API ||
-      !process.env.SSL_VALIDATION_API ||
-      !process.env.SSL_SUCCESS_URL ||
-      !process.env.SSL_FAIL_URL ||
-      !process.env.SSL_CANCEL_URL
+      !config.ssl.store_id ||
+      !config.ssl.store_password ||
+      !config.ssl.payment_api ||
+      !config.ssl.validation_api ||
+      !config.ssl.success_url ||
+      !config.ssl.fail_url ||
+      !config.ssl.cancel_url ||
+      !config.ssl.ipn_url
     ) {
       throw new AppError(
         status.BAD_REQUEST,
@@ -23,16 +23,15 @@ const initPayment = async (paymentData: IPaymentData) => {
     }
 
     const data = {
-      store_id: process.env.SSL_STORE_ID,
-      store_passwd: process.env.SSL_STORE_PASSWORD,
+      store_id: config.ssl.store_id,
+      store_passwd: config.ssl.store_password,
       total_amount: paymentData.amount,
       currency: 'BDT',
       tran_id: paymentData.transactionId,
-      success_url: process.env.SSL_SUCCESS_URL,
-      fail_url: process.env.SSL_FAIL_URL,
-      cancel_url: process.env.SSL_CANCEL_URL,
-      ipn_url:
-        process.env.SSL_IPN_URL || 'http://localhost:5000/api/v1/payment/ipn',
+      success_url: config.ssl.success_url,
+      fail_url: config.ssl.fail_url,
+      cancel_url: config.ssl.cancel_url,
+      ipn_url: config.ssl.ipn_url || 'http://localhost:5000/api/v1/payment/ipn',
       shipping_method: 'N/A',
       product_name: 'Premium Review',
       product_category: 'Digital Content',
@@ -54,12 +53,12 @@ const initPayment = async (paymentData: IPaymentData) => {
       ship_state: 'N/A',
       ship_postcode: 1000,
       ship_country: 'N/A',
-      value_a: paymentData.reviewId, // Store reviewId for reference
+      value_a: paymentData.reviewId,
     };
 
     const response = await axios({
       method: 'post',
-      url: process.env.SSL_PAYMENT_API,
+      url: config.ssl.payment_api,
       data: data,
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     });
@@ -73,9 +72,9 @@ const initPayment = async (paymentData: IPaymentData) => {
 const validatePayment = async (payload: any) => {
   try {
     if (
-      !process.env.SSL_VALIDATION_API ||
-      !process.env.SSL_STORE_ID ||
-      !process.env.SSL_STORE_PASSWORD
+      !config.ssl.validation_api ||
+      !config.ssl.store_id ||
+      !config.ssl.store_password
     ) {
       throw new AppError(
         status.BAD_REQUEST,
@@ -85,7 +84,7 @@ const validatePayment = async (payload: any) => {
 
     const response = await axios({
       method: 'GET',
-      url: `${process.env.SSL_VALIDATION_API}?val_id=${payload.val_id}&store_id=${process.env.SSL_STORE_ID}&store_passwd=${process.env.SSL_STORE_PASSWORD}&format=json`,
+      url: `${config.ssl.validation_api}?val_id=${payload.val_id}&store_id=${config.ssl.store_id}&store_passwd=${config.ssl.store_password}&format=json`,
     });
 
     return response.data;

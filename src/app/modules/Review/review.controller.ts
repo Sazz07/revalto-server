@@ -40,17 +40,20 @@ const getAllReviews = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
-const getSingleReview = catchAsync(async (req: Request, res: Response) => {
-  const { id } = req.params;
-  const result = await ReviewService.getSingleReview(id);
+const getSingleReview = catchAsync(
+  async (req: Request & { user?: IAuthUser }, res: Response) => {
+    const { id } = req.params;
+    const userId = req.user?.id;
+    const result = await ReviewService.getSingleReview(id, userId);
 
-  sendResponse(res, {
-    statusCode: status.OK,
-    success: true,
-    message: 'Review retrieved successfully',
-    data: result,
-  });
-});
+    sendResponse(res, {
+      statusCode: status.OK,
+      success: true,
+      message: 'Review retrieved successfully',
+      data: result,
+    });
+  }
+);
 
 const updateReview = catchAsync(
   async (req: Request & { user?: IAuthUser }, res: Response) => {

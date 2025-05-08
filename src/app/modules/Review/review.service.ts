@@ -1,5 +1,5 @@
 import prisma from '../../../shared/prisma';
-import { Review, ReviewStatus, UserRole } from '@prisma/client';
+import { PaymentStatus, Review, ReviewStatus, UserRole } from '@prisma/client';
 import { IPaginationOptions } from '../../interfaces/pagination';
 import { paginationHelper } from '../../../helpers/paginationHelper';
 import { reviewSearchableFields } from './review.constant';
@@ -7,6 +7,7 @@ import { queryBuilder } from '../../../shared/queryBuilder';
 import { dataFetcher } from '../../../shared/dataFetcher';
 import AppError from '../../errors/AppError';
 import status from 'http-status';
+import { IReviewWithPremiumStatus } from '../../interfaces/common';
 
 const createReview = async (
   payload: {
@@ -158,16 +159,13 @@ const getAllReviews = async (
   });
 };
 
-const getSingleReview = async (id: string): Promise<Review> => {
-  // Increment view count
-  const result = await prisma.review.update({
+const getSingleReview = async (
+  id: string,
+  userId?: string
+): Promise<IReviewWithPremiumStatus> => {
+  const review = await prisma.review.findUniqueOrThrow({
     where: {
       id,
-    },
-    data: {
-      viewCount: {
-        increment: 1,
-      },
     },
     include: {
       category: true,
@@ -232,7 +230,44 @@ const getSingleReview = async (id: string): Promise<Review> => {
     },
   });
 
-  return result;
+  // Increment view count
+  await prisma.review.update({
+    where: { id },
+    data: { viewCount: { increment: 1 } },
+  });
+
+  // When returning with isPremiumLocked
+  if (review.isPremium && userId) {
+    const hasAccess = await prisma.payment.findFirst({
+      where: {
+        reviewId: id,
+        userId: userId,
+        status: PaymentStatus.PAID,
+      },
+    });
+
+    if (!hasAccess) {
+      const previewLength = 100;
+      return {
+        ...review,
+        description:
+          review.description.substring(0, previewLength) +
+          '... [Premium Content]',
+        isPremiumLocked: true,
+      } as IReviewWithPremiumStatus;
+    }
+  } else if (review.isPremium && !userId) {
+    const previewLength = 100;
+    return {
+      ...review,
+      description:
+        review.description.substring(0, previewLength) +
+        '... [Premium Content]',
+      isPremiumLocked: true,
+    } as IReviewWithPremiumStatus;
+  }
+
+  return review as IReviewWithPremiumStatus;
 };
 
 const updateReview = async (
