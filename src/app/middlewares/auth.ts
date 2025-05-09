@@ -12,10 +12,16 @@ const auth = (...roles: string[]) => {
     next: NextFunction
   ) => {
     try {
-      const token = req.headers.authorization;
+      const authHeader = req.headers.authorization;
+
+      if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        throw new AppError(status.UNAUTHORIZED, 'You are not authorized!');
+      }
+
+      const token = authHeader.split(' ')[1];
 
       if (!token) {
-        throw new AppError(status.UNAUTHORIZED, 'You are not authorized!');
+        throw new AppError(status.UNAUTHORIZED, 'Invalid token format');
       }
 
       const verifiedUser = jwtHelpers.verifyToken(
