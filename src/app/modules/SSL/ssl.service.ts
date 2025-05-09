@@ -21,7 +21,7 @@ const initPayment = async (paymentData: IPaymentData) => {
 
     const store_id = config.ssl.store_id;
     const store_passwd = config.ssl.store_password;
-    const is_live = false; // Set to true in production
+    const is_live = config.env === 'production' ? true : false;
 
     const data = {
       total_amount: paymentData.amount,
