@@ -1,20 +1,17 @@
-import axios from 'axios';
 import config from '../../../config';
 import AppError from '../../errors/AppError';
 import status from 'http-status';
 import { IPaymentData } from './ssl.interface';
+import SSLCommerzPayment from 'sslcommerz-lts';
 
 const initPayment = async (paymentData: IPaymentData) => {
   try {
     if (
       !config.ssl.store_id ||
       !config.ssl.store_password ||
-      !config.ssl.payment_api ||
-      !config.ssl.validation_api ||
       !config.ssl.success_url ||
       !config.ssl.fail_url ||
-      !config.ssl.cancel_url ||
-      !config.ssl.ipn_url
+      !config.ssl.cancel_url
     ) {
       throw new AppError(
         status.BAD_REQUEST,
@@ -22,9 +19,11 @@ const initPayment = async (paymentData: IPaymentData) => {
       );
     }
 
+    const store_id = config.ssl.store_id;
+    const store_passwd = config.ssl.store_password;
+    const is_live = false; // Set to true in production
+
     const data = {
-      store_id: config.ssl.store_id,
-      store_passwd: config.ssl.store_password,
       total_amount: paymentData.amount,
       currency: 'BDT',
       tran_id: paymentData.transactionId,
@@ -56,14 +55,10 @@ const initPayment = async (paymentData: IPaymentData) => {
       value_a: paymentData.reviewId,
     };
 
-    const response = await axios({
-      method: 'post',
-      url: config.ssl.payment_api,
-      data: data,
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    });
+    const sslcz = new SSLCommerzPayment(store_id, store_passwd, is_live);
+    const sslResponse = await sslcz.init(data);
 
-    return response.data;
+    return sslResponse;
   } catch (err) {
     throw new AppError(status.BAD_REQUEST, 'Payment error occurred!');
   }
@@ -71,23 +66,23 @@ const initPayment = async (paymentData: IPaymentData) => {
 
 const validatePayment = async (payload: any) => {
   try {
-    if (
-      !config.ssl.validation_api ||
-      !config.ssl.store_id ||
-      !config.ssl.store_password
-    ) {
+    if (!config.ssl.store_id || !config.ssl.store_password) {
       throw new AppError(
         status.BAD_REQUEST,
         'SSL validation configuration is missing'
       );
     }
 
-    const response = await axios({
-      method: 'GET',
-      url: `${config.ssl.validation_api}?val_id=${payload.val_id}&store_id=${config.ssl.store_id}&store_passwd=${config.ssl.store_password}&format=json`,
+    const store_id = config.ssl.store_id;
+    const store_passwd = config.ssl.store_password;
+    const is_live = false; // Set to true in production
+
+    const sslcz = new SSLCommerzPayment(store_id, store_passwd, is_live);
+    const response = await sslcz.validate({
+      val_id: payload.val_id,
     });
 
-    return response.data;
+    return response;
   } catch (err) {
     throw new AppError(status.BAD_REQUEST, 'Payment validation failed!');
   }

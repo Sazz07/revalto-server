@@ -81,7 +81,7 @@ const initPayment = async (
   const paymentData = {
     amount: payment.amount,
     transactionId: payment.transactionId,
-    name: `${user.regularUser.firstName} ${user.regularUser.lastName}`,
+    name: user.regularUser.fullName,
     email: user.email,
     address: user.regularUser.address,
     contactNumber: user.regularUser.contactNumber,
