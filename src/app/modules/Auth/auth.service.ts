@@ -6,9 +6,6 @@ import config from '../../../config';
 import { Secret } from 'jsonwebtoken';
 import AppError from '../../errors/AppError';
 import status from 'http-status';
-import { Request } from 'express';
-import { IFile } from '../../interfaces/file';
-import { fileUploader } from '../../../helpers/fileUploader';
 
 const loginUser = async (payload: { email: string; password: string }) => {
   const userData = await prisma.user.findUniqueOrThrow({
@@ -51,32 +48,38 @@ const loginUser = async (payload: { email: string; password: string }) => {
   };
 };
 
-const registerUser = async (req: Request) => {
-  const file = req.file as IFile;
-
-  if (file) {
-    const uploadToCloudinary = await fileUploader.uploadToCloudinary(file);
-    req.body.user.profilePhoto = uploadToCloudinary?.secure_url;
-  }
+const registerUser = async (userData: {
+  firstName: string;
+  middleName?: string;
+  lastName: string;
+  email: string;
+  password: string;
+}) => {
+  const { firstName, middleName, lastName, email, password } = userData;
 
   const hashedPassword: string = await bcrypt.hash(
-    req.body.password,
+    password,
     Number(config.bcrypt_salt_rounds)
   );
 
-  const userData = {
-    email: req.body.user.email,
+  const userCredentials = {
+    email,
     password: hashedPassword,
     role: UserRole.USER,
   };
 
   const result = await prisma.$transaction(async (transactionClient) => {
     await transactionClient.user.create({
-      data: userData,
+      data: userCredentials,
     });
 
     const createdUser = await transactionClient.regularUser.create({
-      data: req.body.user,
+      data: {
+        firstName,
+        middleName,
+        lastName,
+        email,
+      },
     });
     return createdUser;
   });

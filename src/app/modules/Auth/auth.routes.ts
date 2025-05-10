@@ -16,15 +16,8 @@ router.post(
 
 router.post(
   '/register',
-  fileUploader.upload.single('file'),
-  (req: Request, res: Response, next: NextFunction) => {
-    console.log(req.body.data);
-
-    req.body = AuthValidation.registerZodSchema.parse(
-      JSON.parse(req.body.data)
-    );
-    return AuthController.registerUser(req, res, next);
-  }
+  validateRequest(AuthValidation.registerZodSchema),
+  AuthController.registerUser
 );
 
 router.post('/refresh-token', AuthController.refreshToken);
