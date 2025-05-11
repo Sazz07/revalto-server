@@ -50,8 +50,17 @@ const changePasswordZodSchema = z.object({
     .max(20, 'Password must not exceed 20 characters'),
 });
 
+const forgotPasswordZodSchema = z.object({
+  email: z
+    .string({
+      required_error: 'Email is required',
+    })
+    .email('Invalid email format'),
+});
+
 export const AuthValidation = {
   loginZodSchema,
   changePasswordZodSchema,
   registerZodSchema,
+  forgotPasswordZodSchema,
 };

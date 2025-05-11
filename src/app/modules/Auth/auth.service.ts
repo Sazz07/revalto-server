@@ -6,6 +6,7 @@ import config from '../../../config';
 import { Secret } from 'jsonwebtoken';
 import AppError from '../../errors/AppError';
 import status from 'http-status';
+import emailSender from '../../../helpers/emailSender';
 
 const loginUser = async (payload: { email: string; password: string }) => {
   const userData = await prisma.user.findUniqueOrThrow({
@@ -175,9 +176,86 @@ const changePassword = async (user: any, payload: any) => {
   };
 };
 
+const forgotPassword = async (payload: { email: string }) => {
+  const userData = await prisma.user.findUniqueOrThrow({
+    where: {
+      email: payload.email,
+      status: UserStatus.ACTIVE,
+    },
+  });
+
+  const resetToken = jwtHelpers.generateToken(
+    {
+      id: userData.id,
+      email: userData.email,
+      role: userData.role,
+    },
+    config.jwt.reset_pass_secret as Secret,
+    config.jwt.reset_pass_token_expires_in as string
+  );
+
+  const resetPassLink =
+    config.reset_pass_link + `?userId=${userData.id}&token=${resetToken}`;
+
+  await emailSender(
+    userData.email,
+    `
+          <div>
+              <p>Dear User,</p>
+              <p>Your password reset link 
+                  <a href=${resetPassLink}>
+                      <button>
+                          Reset Password
+                      </button>
+                  </a>
+              </p>
+              <p>Thanks & Regards,</p>
+              <p>Support Team</p>
+          </div>
+          `
+  );
+};
+
+const resetPassword = async (
+  token: string,
+  payload: { id: string; password: string }
+) => {
+  await prisma.user.findUniqueOrThrow({
+    where: {
+      id: payload.id,
+      status: UserStatus.ACTIVE,
+    },
+  });
+
+  const isValidToken = jwtHelpers.verifyToken(
+    token,
+    config.jwt.reset_pass_secret as Secret
+  );
+
+  if (!isValidToken) {
+    throw new AppError(status.FORBIDDEN, 'You are not authorized!');
+  }
+
+  const hashedPassword: string = await bcrypt.hash(
+    payload.password,
+    Number(config.bcrypt_salt_rounds)
+  );
+
+  await prisma.user.update({
+    where: {
+      id: payload.id,
+    },
+    data: {
+      password: hashedPassword,
+    },
+  });
+};
+
 export const AuthService = {
   loginUser,
   registerUser,
   refreshToken,
   changePassword,
+  forgotPassword,
+  resetPassword,
 };
