@@ -9,7 +9,7 @@ import AppError from '../../errors/AppError';
 const loginUser = catchAsync(async (req: Request, res: Response) => {
   const result = await AuthService.loginUser(req.body);
 
-  const { refreshToken } = result;
+  const { refreshToken, accessToken } = result;
 
   res.cookie('refreshToken', refreshToken, {
     secure: config.env === 'production' ? true : false,
@@ -22,14 +22,14 @@ const loginUser = catchAsync(async (req: Request, res: Response) => {
     success: true,
     message: 'Logged in successfully!',
     data: {
-      accessToken: result.accessToken,
+      accessToken,
     },
   });
 });
 
 const registerUser = catchAsync(async (req: Request, res: Response) => {
   const result = await AuthService.registerUser(req.body);
-  const { refreshToken, userData } = result;
+  const { refreshToken, userData, accessToken } = result;
 
   res.cookie('refreshToken', refreshToken, {
     secure: config.env === 'production' ? true : false,
@@ -41,7 +41,7 @@ const registerUser = catchAsync(async (req: Request, res: Response) => {
     statusCode: status.OK,
     success: true,
     message: 'User created successfully!',
-    data: userData,
+    data: { userData, accessToken },
   });
 });
 

@@ -21,7 +21,7 @@ const createAdmin = async (req: Request) => {
 
   const hashedPassword: string = await bcrypt.hash(
     req.body.password,
-    config.bcrypt_salt_rounds as string
+    Number(config.bcrypt_salt_rounds)
   );
 
   const userData = {
