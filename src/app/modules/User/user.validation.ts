@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { UserStatus } from '@prisma/client';
+
 import { EMAIL_REGEX, PHONE_REGEX } from '../../constants';
 
 const createUserZodSchema = z.object({
@@ -42,8 +42,10 @@ const updateUserZodSchema = z.object({
   lastName: z.string().min(1, 'Last name cannot be empty').optional(),
   profilePhoto: z.string().optional(),
   contactNumber: z
-    .string()
-    .regex(PHONE_REGEX, 'Invalid phone number format')
+    .union([
+      z.string().regex(PHONE_REGEX, 'Invalid phone number format'),
+      z.string().max(0),
+    ])
     .optional(),
   address: z.string().optional(),
 });

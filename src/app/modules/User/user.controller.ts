@@ -3,9 +3,7 @@ import { UserService } from './user.service';
 import sendResponse from '../../../shared/sendResponse';
 import catchAsync from '../../../shared/catchAsync';
 import status from 'http-status';
-import pick from '../../../shared/pick';
-import { userFilterableFields } from './user.constant';
-import { paginationKeys } from '../../constants';
+import { IAuthUser } from '../../interfaces/common';
 
 const createUser = catchAsync(async (req: Request, res: Response) => {
   const result = await UserService.createUser(req);
@@ -31,8 +29,8 @@ const getMyProfile = catchAsync(
 );
 
 const updateMyProfile = catchAsync(
-  async (req: Request & { user?: any }, res: Response) => {
-    const result = await UserService.updateMyProfile(req.user, req.body);
+  async (req: Request & { user?: IAuthUser }, res: Response) => {
+    const result = await UserService.updateMyProfile(req);
 
     sendResponse(res, {
       statusCode: status.OK,

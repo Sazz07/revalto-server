@@ -5,6 +5,7 @@ import { fileUploader } from '../../../helpers/fileUploader';
 import * as bcrypt from 'bcrypt';
 import config from '../../../config';
 import prisma from '../../../shared/prisma';
+import { IAuthUser } from '../../interfaces/common';
 
 const createUser = async (req: Request) => {
   const file = req.file as IFile;
@@ -39,12 +40,18 @@ const createUser = async (req: Request) => {
   return result;
 };
 
-const getMyProfile = async (user: any) => {
+const getMyProfile = async (user: IAuthUser) => {
   const userData = await prisma.user.findUniqueOrThrow({
     where: {
-      email: user.email,
+      email: user?.email,
     },
-    include: {
+    select: {
+      id: true,
+      email: true,
+      role: true,
+      status: true,
+      createdAt: true,
+      updatedAt: true,
       admin: true,
       regularUser: true,
     },
@@ -53,20 +60,24 @@ const getMyProfile = async (user: any) => {
   return userData;
 };
 
-const updateMyProfile = async (user: any, payload: any) => {
-  const userData = await prisma.user.findUnique({
+const updateMyProfile = async (req: Request & { user?: IAuthUser }) => {
+  const file = req.file as IFile;
+  const payload = req.body;
+
+  if (file) {
+    const uploadToCloudinary = await fileUploader.uploadToCloudinary(file);
+    payload.profilePhoto = uploadToCloudinary?.secure_url;
+  }
+
+  const userData = await prisma.user.findUniqueOrThrow({
     where: {
-      email: user.email,
+      email: req.user?.email,
     },
     include: {
       admin: true,
       regularUser: true,
     },
   });
-
-  if (!userData) {
-    throw new Error('User not found');
-  }
 
   let result;
 

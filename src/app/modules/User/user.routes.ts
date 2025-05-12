@@ -4,7 +4,8 @@ import { UserValidation } from './user.validation';
 import { UserController } from './user.controller';
 import auth from '../../middlewares/auth';
 import { UserRole } from '@prisma/client';
-import validateRequest from '../../middlewares/validateRequest';
+
+import { IAuthUser } from '../../interfaces/common';
 
 const router = express.Router();
 
@@ -28,8 +29,15 @@ router.get(
 router.patch(
   '/profile/update',
   auth(UserRole.ADMIN, UserRole.USER),
-  validateRequest(UserValidation.updateUserZodSchema),
-  UserController.updateMyProfile
+  fileUploader.upload.single('file'),
+  (req: Request & { user?: IAuthUser }, res: Response, next: NextFunction) => {
+    if (req.body?.data) {
+      req.body = UserValidation.updateUserZodSchema.parse(
+        JSON.parse(req.body.data)
+      );
+    }
+    return UserController.updateMyProfile(req, res, next);
+  }
 );
 
 export const UserRoutes = router;
