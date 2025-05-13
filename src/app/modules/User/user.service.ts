@@ -1,4 +1,4 @@
-import { UserRole, UserStatus } from '@prisma/client';
+import { UserRole } from '@prisma/client';
 import { Request } from 'express';
 import { IFile } from '../../interfaces/file';
 import { fileUploader } from '../../../helpers/fileUploader';
@@ -12,7 +12,9 @@ const createUser = async (req: Request) => {
 
   if (file) {
     const uploadToCloudinary = await fileUploader.uploadToCloudinary(file);
-    req.body.user.profilePhoto = uploadToCloudinary?.secure_url;
+    req.body.profilePhoto = uploadToCloudinary?.secure_url;
+  } else if (req.body.profilePhoto === 'null') {
+    req.body.profilePhoto = null;
   }
 
   const hashedPassword: string = await bcrypt.hash(
@@ -21,7 +23,7 @@ const createUser = async (req: Request) => {
   );
 
   const userData = {
-    email: req.body.user.email,
+    email: req.body.email,
     password: hashedPassword,
     role: UserRole.USER,
   };
@@ -67,6 +69,8 @@ const updateMyProfile = async (req: Request & { user?: IAuthUser }) => {
   if (file) {
     const uploadToCloudinary = await fileUploader.uploadToCloudinary(file);
     payload.profilePhoto = uploadToCloudinary?.secure_url;
+  } else if (payload.profilePhoto === 'null') {
+    payload.profilePhoto = null;
   }
 
   const userData = await prisma.user.findUniqueOrThrow({

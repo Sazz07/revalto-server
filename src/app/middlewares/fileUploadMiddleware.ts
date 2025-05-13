@@ -1,16 +1,17 @@
 import { NextFunction, Request, Response } from 'express';
 import { fileUploader } from '../../helpers/fileUploader';
+import { AnyZodObject } from 'zod';
 
 type FileUploadOptions = {
   fieldName: string;
   maxCount?: number;
   parseData?: boolean;
-  validationSchema?: any;
+  validationSchema?: AnyZodObject;
 };
 
 /**
  * Creates a middleware for handling file uploads with optional JSON data parsing
- * @param options
+ * @param options Configuration options for file upload
  * @returns Express middleware function
  */
 export const createFileUploadMiddleware = (options: FileUploadOptions) => {
@@ -27,7 +28,7 @@ export const createFileUploadMiddleware = (options: FileUploadOptions) => {
         ? fileUploader.upload.single(fieldName)
         : fileUploader.upload.array(fieldName, maxCount);
 
-    uploadMiddleware(req, res, (err: any) => {
+    uploadMiddleware(req, res, (err) => {
       if (err) {
         return next(err);
       }
