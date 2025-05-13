@@ -8,22 +8,29 @@ import { dataFetcher } from '../../../shared/dataFetcher';
 import AppError from '../../errors/AppError';
 import status from 'http-status';
 import { IReviewWithPremiumStatus } from '../../interfaces/common';
+import { Request } from 'express';
+import { IFile } from '../../interfaces/file';
+import { fileUploader } from '../../../helpers/fileUploader';
 
 const createReview = async (
-  payload: {
-    title: string;
-    description: string;
-    rating: number;
-    purchaseSource?: string;
-    images?: string[];
-    categoryId: string;
-    isPremium?: boolean;
-    premiumPrice?: number;
-    tags?: string[];
-  },
+  req: Request,
   userId: string,
   userRole: string
 ): Promise<Review> => {
+  const files = req.files as IFile[];
+  const payload = req.body;
+
+  if (files && files.length > 0) {
+    const uploadPromises = files.map((file) =>
+      fileUploader.uploadToCloudinary(file)
+    );
+
+    const uploadResults = await Promise.all(uploadPromises);
+    payload.images = uploadResults
+      .map((result) => result?.secure_url)
+      .filter(Boolean);
+  }
+
   await prisma.category.findUniqueOrThrow({
     where: {
       id: payload.categoryId,
@@ -70,7 +77,7 @@ const createReview = async (
 
   const tagsConnect = payload.tags
     ? {
-        connect: payload.tags.map((tagId) => ({ id: tagId })),
+        connect: payload.tags.map((tagId: string) => ({ id: tagId })),
       }
     : undefined;
 
@@ -201,7 +208,7 @@ const getSingleReview = async (
       comments: {
         where: {
           isDeleted: false,
-          parentId: null, // Only get top-level comments
+          parentId: null,
         },
         include: {
           user: {
@@ -236,7 +243,6 @@ const getSingleReview = async (
     data: { viewCount: { increment: 1 } },
   });
 
-  // When returning with isPremiumLocked
   if (review.isPremium && userId) {
     const hasAccess = await prisma.payment.findFirst({
       where: {
@@ -272,23 +278,13 @@ const getSingleReview = async (
 
 const updateReview = async (
   id: string,
-  payload: Partial<
-    Omit<
-      Review,
-      | 'tags'
-      | 'category'
-      | 'admin'
-      | 'regularUser'
-      | 'votes'
-      | 'comments'
-      | 'payments'
-      | 'reports'
-      | 'savedBy'
-    >
-  > & { tags?: string[] },
+  req: Request,
   userId: string,
   userRole: string
 ): Promise<Review> => {
+  const files = req.files as IFile[];
+  const payload = req.body;
+
   const existingReview = await prisma.review.findUniqueOrThrow({
     where: {
       id,
@@ -299,6 +295,22 @@ const updateReview = async (
       tags: true,
     },
   });
+
+  if (files && files.length > 0) {
+    const uploadPromises = files.map((file) =>
+      fileUploader.uploadToCloudinary(file)
+    );
+
+    const uploadResults = await Promise.all(uploadPromises);
+    const newImages = uploadResults
+      .map((result) => result?.secure_url)
+      .filter(Boolean);
+
+    // Combine with existing images if needed
+    payload.images = payload.images
+      ? [...payload.images, ...newImages]
+      : [...(existingReview.images || []), ...newImages];
+  }
 
   if (userRole !== UserRole.ADMIN && userRole !== UserRole.SUPER_ADMIN) {
     const regularUser = await prisma.regularUser.findFirst({
@@ -336,7 +348,7 @@ const updateReview = async (
     tagsUpdate = {
       tags: {
         set: [],
-        connect: payload.tags.map((tagId) => ({ id: tagId })),
+        connect: payload.tags.map((tagId: string) => ({ id: tagId })),
       },
     };
     delete payload.tags;
@@ -363,7 +375,6 @@ const updateReview = async (
     }
   }
 
-  // Update the review
   const result = await prisma.review.update({
     where: {
       id,

@@ -11,7 +11,7 @@ import { ReviewService } from './review.service';
 const createReview = catchAsync(
   async (req: Request & { user?: IAuthUser }, res: Response) => {
     const result = await ReviewService.createReview(
-      req.body,
+      req,
       req.user!.id,
       req.user!.role
     );
@@ -60,7 +60,7 @@ const updateReview = catchAsync(
     const { id } = req.params;
     const result = await ReviewService.updateReview(
       id,
-      req.body,
+      req,
       req.user!.id,
       req.user!.role
     );

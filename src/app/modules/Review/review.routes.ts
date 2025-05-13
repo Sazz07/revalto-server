@@ -1,9 +1,10 @@
-import express from 'express';
+import express, { NextFunction, Request, Response } from 'express';
 import { ReviewController } from './review.controller';
-import validateRequest from '../../middlewares/validateRequest';
 import { ReviewValidation } from './review.validation';
 import auth from '../../middlewares/auth';
 import { UserRole } from '@prisma/client';
+import { fileUploader } from '../../../helpers/fileUploader';
+import { IAuthUser } from '../../interfaces/common';
 
 const router = express.Router();
 
@@ -15,15 +16,29 @@ router.get('/:id', ReviewController.getSingleReview);
 router.post(
   '/',
   auth(UserRole.ADMIN, UserRole.USER),
-  validateRequest(ReviewValidation.createReviewZodSchema),
-  ReviewController.createReview
+  fileUploader.upload.array('files', 5),
+  (req: Request & { user?: IAuthUser }, res: Response, next: NextFunction) => {
+    if (req.body?.data) {
+      req.body = ReviewValidation.createReviewZodSchema.parse(
+        JSON.parse(req.body.data)
+      );
+    }
+    return ReviewController.createReview(req, res, next);
+  }
 );
 
 router.patch(
   '/:id',
   auth(UserRole.ADMIN, UserRole.USER),
-  validateRequest(ReviewValidation.updateReviewZodSchema),
-  ReviewController.updateReview
+  fileUploader.upload.array('files', 5),
+  (req: Request & { user?: IAuthUser }, res: Response, next: NextFunction) => {
+    if (req.body?.data) {
+      req.body = ReviewValidation.updateReviewZodSchema.parse(
+        JSON.parse(req.body.data)
+      );
+    }
+    return ReviewController.updateReview(req, res, next);
+  }
 );
 
 router.delete(
