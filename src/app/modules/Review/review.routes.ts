@@ -1,10 +1,9 @@
-import express, { NextFunction, Request, Response } from 'express';
+import express from 'express';
 import { ReviewController } from './review.controller';
 import { ReviewValidation } from './review.validation';
 import auth from '../../middlewares/auth';
 import { UserRole } from '@prisma/client';
-import { fileUploader } from '../../../helpers/fileUploader';
-import { IAuthUser } from '../../interfaces/common';
+import { createFileUploadMiddleware } from '../../middlewares/fileUploadMiddleware';
 
 const router = express.Router();
 
@@ -16,29 +15,23 @@ router.get('/:id', ReviewController.getSingleReview);
 router.post(
   '/',
   auth(UserRole.ADMIN, UserRole.USER),
-  fileUploader.upload.array('files', 5),
-  (req: Request & { user?: IAuthUser }, res: Response, next: NextFunction) => {
-    if (req.body?.data) {
-      req.body = ReviewValidation.createReviewZodSchema.parse(
-        JSON.parse(req.body.data)
-      );
-    }
-    return ReviewController.createReview(req, res, next);
-  }
+  createFileUploadMiddleware({
+    fieldName: 'files',
+    maxCount: 5,
+    validationSchema: ReviewValidation.createReviewZodSchema,
+  }),
+  ReviewController.createReview
 );
 
 router.patch(
   '/:id',
   auth(UserRole.ADMIN, UserRole.USER),
-  fileUploader.upload.array('files', 5),
-  (req: Request & { user?: IAuthUser }, res: Response, next: NextFunction) => {
-    if (req.body?.data) {
-      req.body = ReviewValidation.updateReviewZodSchema.parse(
-        JSON.parse(req.body.data)
-      );
-    }
-    return ReviewController.updateReview(req, res, next);
-  }
+  createFileUploadMiddleware({
+    fieldName: 'files',
+    maxCount: 5,
+    validationSchema: ReviewValidation.updateReviewZodSchema,
+  }),
+  ReviewController.updateReview
 );
 
 router.delete(

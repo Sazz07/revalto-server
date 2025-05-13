@@ -1,23 +1,19 @@
-import express, { NextFunction, Request, Response } from 'express';
-import { fileUploader } from '../../../helpers/fileUploader';
+import express from 'express';
 import { UserValidation } from './user.validation';
 import { UserController } from './user.controller';
 import auth from '../../middlewares/auth';
 import { UserRole } from '@prisma/client';
-
-import { IAuthUser } from '../../interfaces/common';
+import { createFileUploadMiddleware } from '../../middlewares/fileUploadMiddleware';
 
 const router = express.Router();
 
 router.post(
   '/create-user',
-  fileUploader.upload.single('file'),
-  (req: Request, res: Response, next: NextFunction) => {
-    req.body = UserValidation.createUserZodSchema.parse(
-      JSON.parse(req.body.data)
-    );
-    return UserController.createUser(req, res, next);
-  }
+  createFileUploadMiddleware({
+    fieldName: 'file',
+    validationSchema: UserValidation.createUserZodSchema,
+  }),
+  UserController.createUser
 );
 
 router.get(
@@ -29,15 +25,11 @@ router.get(
 router.patch(
   '/profile/update',
   auth(UserRole.ADMIN, UserRole.USER),
-  fileUploader.upload.single('file'),
-  (req: Request & { user?: IAuthUser }, res: Response, next: NextFunction) => {
-    if (req.body?.data) {
-      req.body = UserValidation.updateUserZodSchema.parse(
-        JSON.parse(req.body.data)
-      );
-    }
-    return UserController.updateMyProfile(req, res, next);
-  }
+  createFileUploadMiddleware({
+    fieldName: 'file',
+    validationSchema: UserValidation.updateUserZodSchema,
+  }),
+  UserController.updateMyProfile
 );
 
 export const UserRoutes = router;
