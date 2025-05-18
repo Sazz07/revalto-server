@@ -12,7 +12,8 @@ const loginUser = catchAsync(async (req: Request, res: Response) => {
   const { refreshToken, accessToken } = result;
 
   res.cookie('refreshToken', refreshToken, {
-    secure: config.env === 'production' ? true : false,
+    // secure: config.env === 'production' ? true : false,
+    secure: true,
     httpOnly: true,
     sameSite: 'strict',
   });
@@ -32,7 +33,8 @@ const registerUser = catchAsync(async (req: Request, res: Response) => {
   const { refreshToken, userData, accessToken } = result;
 
   res.cookie('refreshToken', refreshToken, {
-    secure: config.env === 'production' ? true : false,
+    // secure: config.env === 'production' ? true : false,
+    secure: true,
     httpOnly: true,
     sameSite: 'strict',
   });

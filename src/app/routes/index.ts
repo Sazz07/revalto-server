@@ -34,7 +34,7 @@ const moduleRoutes = [
     route: TagRoutes,
   },
   {
-    path: '/review',
+    path: '/reviews',
     route: ReviewRoutes,
   },
   {
@@ -50,7 +50,7 @@ const moduleRoutes = [
     route: PaymentRoutes,
   },
   {
-    path: '/report',
+    path: '/reports',
     route: ReportRoutes,
   },
 ];
