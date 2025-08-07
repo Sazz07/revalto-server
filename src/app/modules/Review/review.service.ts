@@ -9,8 +9,8 @@ import AppError from '../../errors/AppError';
 import status from 'http-status';
 import { IReviewWithPremiumStatus } from '../../interfaces/common';
 import { Request } from 'express';
-import { IFile } from '../../interfaces/file';
-import { fileUploader } from '../../../helpers/fileUploader';
+import { IFile, ICloudinaryResponse } from '../../interfaces/file';
+import { FileUploadHelper } from '../../../helpers/fileUploadHelper';
 
 const createReview = async (
   req: Request,
@@ -22,12 +22,12 @@ const createReview = async (
 
   if (files && files.length > 0) {
     const uploadPromises = files.map((file) =>
-      fileUploader.uploadToCloudinary(file)
+      FileUploadHelper.uploadToCloudinary(file)
     );
 
     const uploadResults = await Promise.all(uploadPromises);
     payload.images = uploadResults
-      .map((result) => result?.secure_url)
+      .map((result: ICloudinaryResponse) => result.secure_url)
       .filter(Boolean);
   }
 
@@ -298,12 +298,12 @@ const updateReview = async (
 
   if (files && files.length > 0) {
     const uploadPromises = files.map((file) =>
-      fileUploader.uploadToCloudinary(file)
+      FileUploadHelper.uploadToCloudinary(file)
     );
 
     const uploadResults = await Promise.all(uploadPromises);
     const newImages = uploadResults
-      .map((result) => result?.secure_url)
+      .map((result: ICloudinaryResponse) => result.secure_url)
       .filter(Boolean);
 
     // Combine with existing images if needed

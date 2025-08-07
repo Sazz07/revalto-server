@@ -1,7 +1,7 @@
 import { UserRole } from '@prisma/client';
 import { Request } from 'express';
 import { IFile } from '../../interfaces/file';
-import { fileUploader } from '../../../helpers/fileUploader';
+import { FileUploadHelper } from '../../../helpers/fileUploadHelper';
 import * as bcrypt from 'bcrypt';
 import config from '../../../config';
 import prisma from '../../../shared/prisma';
@@ -11,8 +11,8 @@ const createUser = async (req: Request) => {
   const file = req.file as IFile;
 
   if (file) {
-    const uploadToCloudinary = await fileUploader.uploadToCloudinary(file);
-    req.body.profilePhoto = uploadToCloudinary?.secure_url;
+    const uploadResult = await FileUploadHelper.uploadToCloudinary(file);
+    req.body.profilePhoto = uploadResult.secure_url;
   } else if (req.body.profilePhoto === 'null') {
     req.body.profilePhoto = null;
   }
@@ -66,13 +66,6 @@ const updateMyProfile = async (req: Request & { user?: IAuthUser }) => {
   const file = req.file as IFile;
   const payload = req.body;
 
-  if (file) {
-    const uploadToCloudinary = await fileUploader.uploadToCloudinary(file);
-    payload.profilePhoto = uploadToCloudinary?.secure_url;
-  } else if (payload.profilePhoto === 'null') {
-    payload.profilePhoto = null;
-  }
-
   const userData = await prisma.user.findUniqueOrThrow({
     where: {
       email: req.user?.email,
@@ -82,6 +75,44 @@ const updateMyProfile = async (req: Request & { user?: IAuthUser }) => {
       regularUser: true,
     },
   });
+
+  // Handle profile photo update
+  if (file) {
+    const uploadResult = await FileUploadHelper.uploadToCloudinary(file);
+    payload.profilePhoto = uploadResult.secure_url;
+
+    // Delete old profile photo from Cloudinary if it exists
+    if (userData.role === UserRole.ADMIN && userData.admin?.profilePhoto) {
+      try {
+        const publicId = userData.admin.profilePhoto
+          .split('/')
+          .pop()
+          ?.split('.')[0];
+        if (publicId) {
+          await FileUploadHelper.deleteFromCloudinary(publicId);
+        }
+      } catch (error) {
+        console.error('Error deleting old profile photo:', error);
+      }
+    } else if (
+      userData.role === UserRole.USER &&
+      userData.regularUser?.profilePhoto
+    ) {
+      try {
+        const publicId = userData.regularUser.profilePhoto
+          .split('/')
+          .pop()
+          ?.split('.')[0];
+        if (publicId) {
+          await FileUploadHelper.deleteFromCloudinary(publicId);
+        }
+      } catch (error) {
+        console.error('Error deleting old profile photo:', error);
+      }
+    }
+  } else if (payload.profilePhoto === 'null') {
+    payload.profilePhoto = null;
+  }
 
   let result;
 

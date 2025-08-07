@@ -4,7 +4,7 @@ import prisma from '../../../shared/prisma';
 import { IFile } from '../../interfaces/file';
 import { IPaginationOptions } from '../../interfaces/pagination';
 import { userSearchableFields } from '../User/user.constant';
-import { fileUploader } from '../../../helpers/fileUploader';
+import { FileUploadHelper } from '../../../helpers/fileUploadHelper';
 import * as bcrypt from 'bcrypt';
 import config from '../../../config';
 import { UserRole, UserStatus } from '@prisma/client';
@@ -15,8 +15,8 @@ const createAdmin = async (req: Request) => {
   const file = req.file as IFile;
 
   if (file) {
-    const uploadToCloudinary = await fileUploader.uploadToCloudinary(file);
-    req.body.admin.profilePhoto = uploadToCloudinary?.secure_url;
+    const uploadResult = await FileUploadHelper.uploadToCloudinary(file);
+    req.body.admin.profilePhoto = uploadResult.secure_url;
   }
 
   const hashedPassword: string = await bcrypt.hash(
